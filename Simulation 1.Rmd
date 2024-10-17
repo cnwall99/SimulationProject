@@ -1,7 +1,202 @@
 ---
-title: "Simulation 2"
+title: "Simulation 1"
 author: "cnwall2"
 date: "2024-10-16"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
+
+```{r setup}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(fig.width=10, fig.height=6) 
+#Setting random seed
+birthday = 19990619
+set.seed(birthday)
+```
+
+```{r}
+n = 25
+sigma = c(1, 5, 10)
+nsims = 2000
+study1 = read.csv("study_1.csv")
+data1 = study1[, 2:4]
+y1 = study1[, 1]
+
+#Model Yi = B0 + B1 (x1) + B2 (x2) + B3 x3 + e
+#Significant Model B0 = 3, B1 = B2 = B3 = 1
+b0 = 3
+b1 = 1
+b2 = 1
+b3 = 1
+
+#Non-Significant Model B0 = 3, B1 = B2 = B3 = 0
+b0_n = 3
+b1_n = 0
+b2_n = 0
+b3_n = 0
+
+#Initiate empty vectors to hold the simulated parameters
+fvalues_significant = list(
+  rep(0, nsims),
+  rep(0, nsims),
+  rep(0, nsims)
+)
+
+pvalues_significant = list(
+  rep(0, nsims),
+  rep(0, nsims),
+  rep(0, nsims)
+)
+
+r2values_significant = list(
+  rep(0, nsims),
+  rep(0, nsims),
+  rep(0, nsims)
+)
+
+# For each value of sigma
+for( i in 1:length(sigma)){
+  # Simulate nsims times
+  for(j in 1:nsims){
+    #calculate the noise using the current sigma value
+    eps = rnorm(n, mean = 0, sd = sigma[i])
+    # simulate fitted values using study_1.csv values and eps noise
+    y = b0 + b1 * data1$x1 + b2 * data1$x2 + b3 * data1$x3 + eps
+    sim_data_1 = cbind(data1, y)
+    mod = lm(
+      y ~ x1 + x2 + x3,
+      data = sim_data_1
+    )
+    
+    # For each model, populate the parameter vector with the value for that simulation
+    fvalues_significant[[i]][j] = summary(mod)$fstatistic[1]
+    pvalues_significant[[i]][j] = pf(summary(mod)$fstatistic[1], summary(mod)$fstatistic[2], summary(mod)$fstatistic[3], lower.tail = FALSE)
+    r2values_significant[[i]][j] = summary(mod)$r.squared
+    
+  }
+}
+```
+
+```{r}
+
+#R2 distribution constants (R2 values are F-distributed as F(k - 1)(n - k) where k is the number of regressors and n is the sample size)
+k = 3
+
+#plotting each parameter vs each value of sigma, including curves for true distributions
+
+par(mfrow = c(3, 3))
+hist(fvalues_significant[[1]],
+     main = paste("Histogram of F-Values at Sigma = ", sigma[1]), xlab = "F-Value", probability = TRUE)
+curve(df(x, 3, 21), add = TRUE, col = "orange", lwd = 2)
+hist(fvalues_significant[[2]],
+     main = paste("Histogram of F-Values at Sigma = ", sigma[2]), xlab = "F-Value", probability = TRUE)
+curve(df(x, 3, 21), add = TRUE, col = "orange", lwd = 2)
+hist(fvalues_significant[[3]],
+     main = paste("Histogram of F-Values at Sigma = ", sigma[3]), xlab = "F-Value", probability = TRUE)
+curve(df(x, 3, 21), add = TRUE, col = "orange", lwd = 2)
+hist(pvalues_significant[[1]],
+     main = paste("Histogram of p-Values at Sigma = ", sigma[1]), xlab = "p-Value", probability = TRUE)
+curve(dunif(x), add = TRUE, col = "orange", lwd = 2)
+hist(pvalues_significant[[2]],
+     main = paste("Histogram of p-Values at Sigma = ", sigma[2]), xlab = "p-Value", probability = TRUE)
+curve(dunif(x), add = TRUE, col = "orange", lwd = 2)
+hist(pvalues_significant[[3]],
+     main = paste("Histogram of p-Values at Sigma = ", sigma[3]), xlab = "p-Value", probability = TRUE)
+curve(dunif(x), add = TRUE, col = "orange", lwd = 2)
+hist(r2values_significant[[1]],
+     main = paste("Histogram of R2 Values at Sigma = ", sigma[1]),  xlab = "R2-Value", probability = TRUE)
+curve(df(x, k - 1, n - k ), add = TRUE, col = "orange", lwd = 2)
+hist(r2values_significant[[2]],
+     main = paste("Histogram of R2 Values at Sigma = ", sigma[2]), xlab = "R2-Value")
+curve(df(x, k - 1, n - k ), from= 0, to = 1, add = TRUE, col = "orange", lwd = 2, probability = TRUE)
+hist(r2values_significant[[3]],
+     main = paste("Histogram of R2 Values at Sigma = ", sigma[3]), xlab = "R2-Value", probability = TRUE)
+curve(df(x, k - 1, n - k ), add = TRUE, col = "orange", lwd = 2)
+```
+
+```{r}
+#Repeating calculations for the non-significant model Y = B0 + e
+
+#Initiate empty vectors to hold the simulated parameters
+fvalues_not_significant = list(
+  rep(0, nsims),
+  rep(0, nsims),
+  rep(0, nsims)
+)
+
+pvalues_not_significant = list(
+  rep(0, nsims),
+  rep(0, nsims),
+  rep(0, nsims)
+)
+
+r2values_not_significant = list(
+  rep(0, nsims),
+  rep(0, nsims),
+  rep(0, nsims)
+)
+
+# For each value of sigma
+for( i in 1:length(sigma)){
+  # Simulate nsims times
+  for(j in 1:nsims){
+    #calculate the noise using the current sigma value
+    eps = rnorm(n, mean = 0, sd = sigma[i])
+    # simulate fitted values using study_1.csv values and eps noise
+    y = b0_n + b1_n * data1$x1 + b2_n * data1$x2 + b3_n * data1$x3 + eps
+    sim_data_1 = cbind(data1, y)
+    mod = lm(
+      y ~ x1 + x2 + x3,
+      data = sim_data_1
+    )
+    
+    # For each model, populate the parameter vector with the value for that simulation
+    fvalues_not_significant[[i]][j] = summary(mod)$fstatistic[1]
+    pvalues_not_significant[[i]][j] = pf(summary(mod)$fstatistic[1], summary(mod)$fstatistic[2], summary(mod)$fstatistic[3], lower.tail = FALSE)
+    r2values_not_significant[[i]][j] = summary(mod)$r.squared
+    
+  }
+}
+```
+
+```{r}
+
+#R2 distribution constants (R2 values are F-distributed as F(k - 1)(n - k) where k is the number of regressors and n is the sample size)
+k = 3
+  
+#plotting each parameter vs each value of sigma, including curves for true distributions
+
+par(mfrow = c(3, 3), fig.width = c(8))
+hist(fvalues_not_significant[[1]],
+     main = paste("Histogram of F-Values at Sigma = ", sigma[1]), xlab = "F-Value", probability = TRUE)
+curve(df(x, 3, 21), add = TRUE, col = "orange", lwd = 2)
+hist(fvalues_not_significant[[2]],
+     main = paste("Histogram of F-Values at Sigma = ", sigma[2]), xlab = "F-Value", probability = TRUE)
+curve(df(x, 3, 21), add = TRUE, col = "orange", lwd = 2)
+hist(fvalues_not_significant[[3]],
+     main = paste("Histogram of F-Values at Sigma = ", sigma[3]), xlab = "F-Value", probability = TRUE)
+curve(df(x, 3, 21), add = TRUE, col = "orange", lwd = 2)
+hist(pvalues_not_significant[[1]],
+     main = paste("Histogram of p-Values at Sigma = ", sigma[1]), xlab = "p-Value", probability = TRUE)
+curve(dunif(x), add = TRUE, col = "orange", lwd = 2)
+hist(pvalues_not_significant[[2]],
+     main = paste("Histogram of p-Values at Sigma = ", sigma[2]), xlab = "p-Value", probability = TRUE)
+curve(dunif(x), add = TRUE, col = "orange", lwd = 2)
+hist(pvalues_not_significant[[3]],
+     main = paste("Histogram of p-Values at Sigma = ", sigma[3]), xlab = "p-Value", probability = TRUE)
+curve(dunif(x), add = TRUE, col = "orange", lwd = 2)
+hist(r2values_not_significant[[1]],
+     main = paste("Histogram of R2 Values at Sigma = ", sigma[1]),  xlab = "R2-Value", probability = TRUE)
+curve(df(x, k - 1, n - k ), add = TRUE, col = "orange", lwd = 2)
+hist(r2values_not_significant[[2]],
+     main = paste("Histogram of R2 Values at Sigma = ", sigma[2]), xlab = "R2-Value")
+curve(df(x, k - 1, n - k ), from= 0, to = 1, add = TRUE, col = "orange", lwd = 2, probability = TRUE)
+hist(r2values_not_significant[[3]],
+     main = paste("Histogram of R2 Values at Sigma = ", sigma[3]), xlab = "R2-Value", probability = TRUE)
+curve(df(x, k - 1, n - k ), add = TRUE, col = "orange", lwd = 2)
+```
+
+
+
 
