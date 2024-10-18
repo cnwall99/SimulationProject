@@ -3,5 +3,125 @@ title: "Simulation 3"
 author: "cnwall2"
 date: "2024-10-16"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
+
+```{r setup}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(fig.width=10, fig.height=6) 
+#Setting random seed
+birthday = 19990619
+set.seed(birthday)
+```
+
+```{r}
+# Model - Y = b0 _ b1(x1) + e
+b0 = 0
+b1 = seq(-2, 2, by = 0.1)
+sigma = c(1, 2, 4)
+n = c(10, 20, 30)
+alpha = 0.05
+nsims = 1000
+
+# Generating the  empty vector to store the p-values of each simulation
+p_values = array(0, dim = c(length(b1), length(sigma), length(n), nsims))
+
+#simulating for each value of B1, sigma, and n
+for(i in 1:length(b1)){
+  for(j in 1:length(sigma)){
+    for(k in 1:length(n)){
+      for(a in 1:nsims){
+        #Generating factor values
+        x_values = seq(0, 5, length = n[k])
+        #Generating noise and calculating y_fitted
+        eps = rnorm(n[k], mean = 0, sd = sigma[j])
+        y = b0 + b1[i]*x_values + eps
+        #generating model
+        mod = lm(y ~ x_values)
+        p_values[i, j, k, a] = summary(mod)$coef[2, 4] < alpha
+      }
+    }
+  }
+}
+
+#generate an empty array to store the power for each combo of b1, n, and sigma
+pow= array(0, dim = c(length(b1), length(sigma), length(n)))
+#Calculate power for each simulation
+for(i in 1:length(b1)){
+  for(j in 1:length(sigma)){
+    for( k in 1:length(n)){
+      pow[i, j, k] = sum(p_values[i, j, k, ]) / nsims
+    }
+  }
+}
+```
+
+```{r}
+#pow is structured as [b1_val, sigma_val, n_val]
+#Generating plots for each value of sigma
+par(mfrow = c(3, 1))
+for(i in 1:length(sigma)){
+    print(i)
+    plot(NULL, xlim=c(min(b1),max(b1)), ylim=c(0,1), ylab="Power", xlab="B1", main = paste("Sigma = ", sigma[i]))
+    lines(b1, pow[, i, 1 ], main = "sigma 1, n 1", cex = 1, pch  = 19, col = "red")
+    lines(b1, pow[, i, 2 ], main = "sigma 2, n 1", cex = 1, pch  = 19, col = "blue")
+    lines(b1, pow[, i, 3 ], main = "sigma 2, n 1", cex = 1, pch  = 19, col = "darkgreen")
+    legend(x = "bottomleft", legend = c(paste("N = ", n[1]), paste("N = ", n[2]), paste("N = ", n[3])), fill = c("red", "blue", "darkgreen"), cex = 0.75)
+  }
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

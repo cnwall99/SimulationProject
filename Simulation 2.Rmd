@@ -6,7 +6,6 @@ output: html_document
 editor_options: 
   chunk_output_type: console
 ---
-
 ```{r setup}
 knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 knitr::opts_chunk$set(fig.width=10, fig.height=6) 
@@ -31,7 +30,7 @@ b9 = 0
 n = 500
 sigma = c(1, 2, 4)
 nsims = 1000
-study2 = read.csv("study_2.csv")[, 2: 10]
+study2 = read.csv("study_2.csv")
 ntrain = 250
 
 
@@ -127,72 +126,74 @@ for(i in 1:length(sigma)){
   for(j in 1:nsims){
     #select a random sample for trainnig and testing
     train_data_idx = sample(1:nrow(study2), ntrain)
-    train = study2[train_data_idx, ]
-    test = study2[-train_data_idx, ]
+    
     #calculate noise
     eps = rnorm(ntrain, mean = 0, sd = sigma[i])
     #calculate y
-    y = b0 + b1*study2$x1 + b2*study2$x2 + b3*study2$x3 + b4*study2$x4 + b5*study2$x5 + b6*study2$x6 + b7*study2$x7 + b8*study2$x8 + b9*study2$x9
+    study2$y = b0 + b1*study2$x1 + b2*study2$x2 + b3*study2$x3 + b4*study2$x4 + b5*study2$x5 + b6*study2$x6 + b7*study2$x7 + b8*study2$x8 + b9*study2$x9
+    
+    train = study2[train_data_idx, ]
+    test = study2[-train_data_idx, ]
     
     mod1 = lm(
       y ~ x1,
-      data = study2
+      data = train
     )
     mod2 = lm(
       y ~ x1 + x2,
-      data = study2
+      data = train
     )
     mod3 = lm(
       y ~ x1 + x2 + x3,
-      data = study2
+      data = train
     )
     mod4 = lm(
       y ~ x1 + x2 + x3 + x4,
-      data = study2
+      data = train
     )
     mod5 = lm(
       y ~ x1 + x2 + x3 + x4 + x5,
-      data = study2
+      data = train
     )
     mod6 = lm(
       y ~ x1 + x2 + x3 + x4 + x5 + x6,
-      data = study2
+      data = train
     )
     mod7 = lm(
       y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7,
-      data = study2
+      data = train
     )
     mod8 = lm(
       y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8,
-      data = study2
+      data = train
     )
     mod9 = lm(
       y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9,
-      data = study2
+      data = train
     )
     
     train_error = c(
-      rmse(y, predict(mod1, train), ntrain),
-      rmse(y, predict(mod2, train), ntrain),
-      rmse(y, predict(mod3, train), ntrain),
-      rmse(y, predict(mod4, train), ntrain),
-      rmse(y, predict(mod5, train), ntrain),
-      rmse(y, predict(mod6, train), ntrain),
-      rmse(y, predict(mod7, train), ntrain),
-      rmse(y, predict(mod8, train), ntrain),
-      rmse(y, predict(mod9, train), ntrain)
+      rmse(train$y, predict(mod1, train), ntrain),
+      rmse(train$y, predict(mod2, train), ntrain),
+      rmse(train$y, predict(mod3, train), ntrain),
+      rmse(train$y, predict(mod4, train), ntrain),
+      rmse(train$y, predict(mod5, train), ntrain),
+      rmse(train$y, predict(mod6, train), ntrain),
+      rmse(train$y, predict(mod7, train), ntrain),
+      rmse(train$y, predict(mod8, train), ntrain),
+      rmse(train$y, predict(mod9, train), ntrain)
     )
     
     test_error = c(
-      rmse(y, predict(mod1, test), ntrain),
-      rmse(y, predict(mod2, test), ntrain),
-      rmse(y, predict(mod3, test), ntrain),
-      rmse(y, predict(mod4, test), ntrain),
-      rmse(y, predict(mod5, test), ntrain),
-      rmse(y, predict(mod6, test), ntrain),
-      rmse(y, predict(mod7, test), ntrain),
-      rmse(y, predict(mod8, test), ntrain),
-      rmse(y, predict(mod9, test), ntrain)
+      rmse(test$y, predict(mod1, test), ntrain),
+      rmse(test$y, predict(mod2, test), ntrain),
+      rmse(test$y, predict(mod3, test), ntrain),
+      rmse(test$y, predict(mod4, test), ntrain),
+      rmse(test$y, predict(mod5, test), ntrain),
+      rmse(test$y, predict(mod6, test), ntrain),
+      rmse(test$y, predict(mod7, test), ntrain),
+      rmse(test$y, predict(mod8, test), ntrain),
+      rmse(test$y, predict(mod9, test), ntrain)
     )
     
     model_sel[[i]][j] = which.min(test_error)
@@ -283,7 +284,7 @@ avg_test_rsme = list(
     mean(test_rsme[[2]][[9]])
   ),
   c(
-    mean(test_rsme[[1]][[1]]),
+    mean(test_rsme[[3]][[1]]),
     mean(test_rsme[[3]][[2]]),
     mean(test_rsme[[3]][[3]]),
     mean(test_rsme[[3]][[4]]),
@@ -297,27 +298,28 @@ avg_test_rsme = list(
 
 #plot average test_rsme vs model size
 par(mfrow = c(2,3))
-plot(seq(1:9), avg_train_rsme[[1]], col = "blue", pch = 19, xlab = "Number of Factors", ylab = "Average Train RSME", main = paste("Train RSME vs Factors: Sigma = ", sigma[1]), cex = 2, ylim = c(11.2, 12.1))
+plot(seq(1:9), avg_train_rsme[[1]], col = "blue", pch = 19, xlab = "Number of Factors", ylab = "Average Train RSME", main = paste("Train RSME vs Factors: Sigma = ", sigma[1]), cex = 2)
 axis(1, at = seq(1:9))
-plot(seq(1:9), avg_train_rsme[[2]], col = "blue", pch = 19, xlab = "Number of Factors", ylab = "Average Train RSME", main = paste("Train RSME vs Factors: Sigma = ", sigma[2]), cex = 2, ylim = c(11.2, 12.1))
+plot(seq(1:9), avg_train_rsme[[2]], col = "blue", pch = 19, xlab = "Number of Factors", ylab = "Average Train RSME", main = paste("Train RSME vs Factors: Sigma = ", sigma[2]), cex = 2)
 axis(1, at = seq(1:9))
-plot(seq(1:9), avg_train_rsme[[3]], col = "blue", pch = 19, xlab = "Number of Factors", ylab = "Average Train RSME", main = paste("Train RSME vs Factors: Sigma = ", sigma[3]), cex = 2, ylim = c(11.2, 12.1))
+plot(seq(1:9), avg_train_rsme[[3]], col = "blue", pch = 19, xlab = "Number of Factors", ylab = "Average Train RSME", main = paste("Train RSME vs Factors: Sigma = ", sigma[3]), cex = 2)
 axis(1, at = seq(1:9))
-
-
-plot(seq(1:9), avg_test_rsme[[1]], col = "blue", pch = 19, xlab = "Number of Factors", ylab = "Average Test RSME", main = paste("Test RSME vs Factors: Sigma = ", sigma[1]), cex = 2, ylim = c(11.2, 12.1))
+plot(seq(1:9), avg_test_rsme[[1]], col = "blue", pch = 19, xlab = "Number of Factors", ylab = "Average Test RSME", main = paste("Test RSME vs Factors: Sigma = ", sigma[1]), cex = 2)
 axis(1, at = seq(1:9))
-plot(seq(1:9), avg_test_rsme[[2]], col = "blue", pch = 19, xlab = "Number of Factors", ylab = "Average Test RSME", main = paste("Test RSME vs Factors: Sigma = ", sigma[2]), cex = 2, ylim = c(11.2, 12.1))
+plot(seq(1:9), avg_test_rsme[[2]], col = "blue", pch = 19, xlab = "Number of Factors", ylab = "Average Test RSME", main = paste("Test RSME vs Factors: Sigma = ", sigma[2]), cex = 2)
 axis(1, at = seq(1:9))
-plot(seq(1:9), avg_test_rsme[[3]], col = "blue", pch = 19, xlab = "Number of Factors", ylab = "Average Test RSME", main = paste("Test RSME vs Factors: Sigma = ", sigma[3]), cex = 2, ylim = c(11.2, 12.1))
+plot(seq(1:9), avg_test_rsme[[3]], col = "blue", pch = 19, xlab = "Number of Factors", ylab = "Average Test RSME", main = paste("Test RSME vs Factors: Sigma = ", sigma[3]), cex = 2)
 axis(1, at = seq(1:9))
 ```
 
 ```{r}
 par(mfrow = c(1,3))
-hist(model_sel[[1]])
-hist(model_sel[[2]])
-hist(model_sel[[3]])
+hist1 = hist(model_sel[[1]], breaks = seq(1:9), xlab = "Model #", ylab = "Times Selected", main = paste("Model Selections by Test RMSE - Sigma = ", sigma[1]))
+axis(1, at = seq(1:9))
+hist(model_sel[[2]], breaks = seq(1:9), xlab = "Model #", ylab = "Times Selected", main = paste("Model Selections by Test RMSE - Sigma = ", sigma[2]))
+axis(1, at = seq(1:9))
+hist(model_sel[[3]], breaks = seq(1:9), xlab = "Model #", ylab = "Times Selected", main = paste("Model Selections by Test RMSE - Sigma = ", sigma[3]))
+axis(1, at = seq(1:9))
 ```
 
 
