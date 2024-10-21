@@ -7,7 +7,36 @@ editor_options:
   chunk_output_type: console
 ---
 
+# **Study 1: Investigation Into MLR Significance of Regression**
+
+### <u>**Introduction**</u>
+This study was performed to observe the significance of regression for Multiple Linear Regression (MLR). To demonstrate the difference in significance, two models were used. First, a model where all factors are significant:</br></br>
+<center>**$Y_i = \beta_0 + \beta_1 x_{i1} + \beta_2 x_{i2} + \beta_3 x_{i3} + \epsilon_i$**</center></br>
+<ul>
+<li>$\epsilon_i \sim N(0, \sigma^2)$</li>
+<li>$\beta_0 = 3$</li>
+<li>$\beta_1 = 1$</li>
+<li>$\beta_2 = 1$</li>
+<li>$\beta_3 = 1$</li>
+</ul>
+
+Second, a model where only the intercept term is significant:
+
+<center>**$Y_i = \beta_0 + \beta_1 x_{i1} + \beta_2 x_{i2} + \beta_3 x_{i3} + \epsilon_i$**</center></br>
+<ul>
+<li>$\epsilon_i \sim N(0, \sigma^2)$</li>
+<li>$\beta_0 = 3$</li>
+<li>$\beta_1 = 0$</li>
+<li>$\beta_2 = 0$</li>
+<li>$\beta_3 = 0$</li>
+</ul></br>
+For each model, an F-test will be used to determine the significance of regression for 3 values of sigma ($\sigma \in (1, 5, 10)$). To mitigate the affect of noise on the results, each model/sigma pair will be simluated 2000 times (sample size will remain constant at $n = 25$). Three values will be stored for each simulation to identify the affect of standard deviation on significance of regression for the two models: the F-statistic, p-value of the F-test, and $R^2$.
+
+### <u>**Methods**</u>
+
+First, a random seed was set to ensure repeatability.
 ```{r setup}
+# Setting standard settings for the report (suppress warnings in html doc and set figure size)
 knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 knitr::opts_chunk$set(fig.width=10, fig.height=6) 
 #Setting random seed
@@ -15,13 +44,22 @@ birthday = 19990619
 set.seed(birthday)
 ```
 
+Supplied data was used to simulate values of the dependent variable.
+
 ```{r}
+# Setting up constants and the data frame
 n = 25
 sigma = c(1, 5, 10)
 nsims = 2000
 study1 = read.csv("study_1.csv")
+
+head(study1)
 data1 = study1[, 2:4]
 y1 = study1[, 1]
+```
+
+The significant and insignificant models were then instantiated, as well as the appropriate constants / parameters. Each model was simulated 2000 times for each value of sigma, and the F - statistic, p-value of the F-test, and $R^2$ value was recorded.
+```{r}
 
 #Model Yi = B0 + B1 (x1) + B2 (x2) + B3 x3 + e
 #Significant Model B0 = 3, B1 = B2 = B3 = 1
@@ -79,43 +117,6 @@ for( i in 1:length(sigma)){
 ```
 
 ```{r}
-
-#R2 distribution constants (R2 values are F-distributed as F(k - 1)(n - k) where k is the number of regressors and n is the sample size)
-k = 3
-
-#plotting each parameter vs each value of sigma, including curves for true distributions
-
-par(mfrow = c(3, 3))
-hist(fvalues_significant[[1]],
-     main = paste("Histogram of F-Values at Sigma = ", sigma[1]), xlab = "F-Value", probability = TRUE)
-curve(df(x, 3, 21), add = TRUE, col = "orange", lwd = 2)
-hist(fvalues_significant[[2]],
-     main = paste("Histogram of F-Values at Sigma = ", sigma[2]), xlab = "F-Value", probability = TRUE)
-curve(df(x, 3, 21), add = TRUE, col = "orange", lwd = 2)
-hist(fvalues_significant[[3]],
-     main = paste("Histogram of F-Values at Sigma = ", sigma[3]), xlab = "F-Value", probability = TRUE)
-curve(df(x, 3, 21), add = TRUE, col = "orange", lwd = 2)
-hist(pvalues_significant[[1]],
-     main = paste("Histogram of p-Values at Sigma = ", sigma[1]), xlab = "p-Value", probability = TRUE)
-curve(dunif(x), add = TRUE, col = "orange", lwd = 2)
-hist(pvalues_significant[[2]],
-     main = paste("Histogram of p-Values at Sigma = ", sigma[2]), xlab = "p-Value", probability = TRUE)
-curve(dunif(x), add = TRUE, col = "orange", lwd = 2)
-hist(pvalues_significant[[3]],
-     main = paste("Histogram of p-Values at Sigma = ", sigma[3]), xlab = "p-Value", probability = TRUE)
-curve(dunif(x), add = TRUE, col = "orange", lwd = 2)
-hist(r2values_significant[[1]],
-     main = paste("Histogram of R2 Values at Sigma = ", sigma[1]),  xlab = "R2-Value", probability = TRUE)
-curve(df(x, k - 1, n - k ), add = TRUE, col = "orange", lwd = 2)
-hist(r2values_significant[[2]],
-     main = paste("Histogram of R2 Values at Sigma = ", sigma[2]), xlab = "R2-Value")
-curve(df(x, k - 1, n - k ), from= 0, to = 1, add = TRUE, col = "orange", lwd = 2, probability = TRUE)
-hist(r2values_significant[[3]],
-     main = paste("Histogram of R2 Values at Sigma = ", sigma[3]), xlab = "R2-Value", probability = TRUE)
-curve(df(x, k - 1, n - k ), add = TRUE, col = "orange", lwd = 2)
-```
-
-```{r}
 #Repeating calculations for the non-significant model Y = B0 + e
 
 #Initiate empty vectors to hold the simulated parameters
@@ -160,6 +161,49 @@ for( i in 1:length(sigma)){
 }
 ```
 
+### <u>**Results**</u>
+
+After the completion of all simulations, the values of the F-statistic, p-value of the F-test, and $R^2$ were plotted in a histogram for each model. This was done to identify how each parameter varied with the standard deviation, as well as the models behaved in relation to each other.
+```{r}
+
+#R2 distribution constants (R2 values are F-distributed as F(k - 1)(n - k) where k is the number of regressors and n is the sample size)
+k = 3
+
+#plotting each parameter vs each value of sigma, including curves for true distributions
+
+par(mfrow = c(3, 3))
+
+hist(fvalues_significant[[1]],
+     main = paste("Histogram of F-Values at Sigma = ", sigma[1]), xlab = "F-Value", probability = TRUE)
+curve(df(x, 3, 21), add = TRUE, col = "orange", lwd = 2)
+hist(fvalues_significant[[2]],
+     main = paste("Histogram of F-Values at Sigma = ", sigma[2]), xlab = "F-Value", probability = TRUE)
+curve(df(x, 3, 21), add = TRUE, col = "orange", lwd = 2)
+mtext("Significant Model - 2000 Simulations", side = 3, line = 3)
+hist(fvalues_significant[[3]],
+     main = paste("Histogram of F-Values at Sigma = ", sigma[3]), xlab = "F-Value", probability = TRUE)
+curve(df(x, 3, 21), add = TRUE, col = "orange", lwd = 2)
+hist(pvalues_significant[[1]],
+     main = paste("Histogram of p-Values at Sigma = ", sigma[1]), xlab = "p-Value", probability = TRUE)
+curve(dunif(x), add = TRUE, col = "orange", lwd = 2)
+hist(pvalues_significant[[2]],
+     main = paste("Histogram of p-Values at Sigma = ", sigma[2]), xlab = "p-Value", probability = TRUE)
+curve(dunif(x), add = TRUE, col = "orange", lwd = 2)
+hist(pvalues_significant[[3]],
+     main = paste("Histogram of p-Values at Sigma = ", sigma[3]), xlab = "p-Value", probability = TRUE)
+curve(dunif(x), add = TRUE, col = "orange", lwd = 2)
+hist(r2values_significant[[1]],
+     main = paste("Histogram of R2 Values at Sigma = ", sigma[1]),  xlab = "R2-Value", probability = TRUE)
+curve(df(x, k - 1, n - k ), add = TRUE, col = "orange", lwd = 2)
+hist(r2values_significant[[2]],
+     main = paste("Histogram of R2 Values at Sigma = ", sigma[2]), xlab = "R2-Value")
+curve(df(x, k - 1, n - k ), from= 0, to = 1, add = TRUE, col = "orange", lwd = 2, probability = TRUE)
+hist(r2values_significant[[3]],
+     main = paste("Histogram of R2 Values at Sigma = ", sigma[3]), xlab = "R2-Value", probability = TRUE)
+curve(df(x, k - 1, n - k ), add = TRUE, col = "orange", lwd = 2)
+
+```
+
 ```{r}
 
 #R2 distribution constants (R2 values are F-distributed as F(k - 1)(n - k) where k is the number of regressors and n is the sample size)
@@ -167,13 +211,14 @@ k = 3
   
 #plotting each parameter vs each value of sigma, including curves for true distributions
 
-par(mfrow = c(3, 3), fig.width = c(8))
+par(mfrow = c(3, 3))
 hist(fvalues_not_significant[[1]],
      main = paste("Histogram of F-Values at Sigma = ", sigma[1]), xlab = "F-Value", probability = TRUE)
 curve(df(x, 3, 21), add = TRUE, col = "orange", lwd = 2)
 hist(fvalues_not_significant[[2]],
      main = paste("Histogram of F-Values at Sigma = ", sigma[2]), xlab = "F-Value", probability = TRUE)
 curve(df(x, 3, 21), add = TRUE, col = "orange", lwd = 2)
+mtext("Insignificant Model - 2000 Simulations", side = 3, line = 3)
 hist(fvalues_not_significant[[3]],
      main = paste("Histogram of F-Values at Sigma = ", sigma[3]), xlab = "F-Value", probability = TRUE)
 curve(df(x, 3, 21), add = TRUE, col = "orange", lwd = 2)
@@ -196,6 +241,27 @@ hist(r2values_not_significant[[3]],
      main = paste("Histogram of R2 Values at Sigma = ", sigma[3]), xlab = "R2-Value", probability = TRUE)
 curve(df(x, k - 1, n - k ), add = TRUE, col = "orange", lwd = 2)
 ```
+
+### <u>**Discussion**</u>
+Each of the three simulated parameters is an indicator as to which model is more significant for this dataset. As is shown in the plots above, the F - statistic for the insignificant model is lower across all simulations than the significant model. In general, the closer F is to 1.0, the more likely that there is no linear relationship between the predictor and response variables. Since the F - statistic for the insignificant model is near 1.0 for all tests, it is likely that the significant model is a better representation of this dataset.</br></br>
+The p-value plots for each model represent the distribution of p-values for the F-test of each simulation. For 2000 simulations, it seems like each p-value is equally likely. This makes sense, as the true distribution of p-values (when there is no relationship between predictor and response) is uniform. The insignificant model plots are much different. When sigma is low, the p-value distribution is almost entirely numbers very near zero. This is indicative that the null hypothesis for the F-test on the significant model (there is no relationship between the predictors and response) should be rejected in essentially all simulations, meaning that the significant model is a better representation of the dataset.</br></br>
+The $R^2$ plots for each model are also quite different. The significant model shows a (nearly) normal distribution that is centered around ~0.85. This is indicative of a relatively good fit for the dataset. As the standard deviation increases, the $R^2$ distribution's mean also decreases, which makes sense as the affect of the simulated noise is more significant. For the insignificant model, the $R^2$ value is nearly identical for all values of sigma, and has a mean value of ~0.1, which is indicative of a poor fit.</br></br>
+Each of the simulated F-values, p-values, and $R^2$ distributions indicate that the significant model is a better representation of the dataset than the insignificant model. Due to this, it can be determined that that $\beta_1, \beta_2$, and $\beta_3$ should be included in the regression.</br></br>
+In general, the increase in deviation (increasing values of sigma) makes the significance of the significant model more difficult to determine. Each of the  parameters observed trends further towards its true distribution (F -> F - statistic, Uniform -> P-value, F -> $R^2$), which reduces the information gained from the statistical tests.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
